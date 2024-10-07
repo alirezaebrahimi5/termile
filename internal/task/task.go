@@ -1,18 +1,26 @@
 package task
 
+import "time"
+
 // Task represents a task with a title and completion status
 type Task struct {
-	ID       int
-	Title    string
-	Complete bool
-	Subtasks []Subtask
+	ID          int
+	Title       string
+	Description string // Add this line
+	Complete    bool
+	Subtasks    []Subtask
+	CreatedAt   time.Time
+	CompletedAt *time.Time
 }
 
 // Subtask represents a subtask under a task
 type Subtask struct {
-	ID       int
-	Title    string
-	Complete bool
+	ID          int
+	Title       string
+	Description string // Add this line
+	Complete    bool
+	CreatedAt   time.Time
+	CompletedAt *time.Time
 }
 
 // TaskManager manages a list of tasks
@@ -54,23 +62,25 @@ func (tm *TaskManager) SetTasks(tasks []Task) {
 	}
 }
 
-// AddTask adds a new task with a title
-func (tm *TaskManager) AddTask(title string) {
+func (tm *TaskManager) AddTask(title string, description string) {
 	task := Task{
-		ID:    tm.nextTaskID,
-		Title: title,
+		ID:          tm.nextTaskID,
+		Title:       title,
+		Description: description,
+		CreatedAt:   time.Now(),
 	}
 	tm.tasks = append(tm.tasks, task)
 	tm.nextTaskID++
 }
 
-// AddSubtask adds a new subtask under a specific task
-func (tm *TaskManager) AddSubtask(taskID int, title string) {
+func (tm *TaskManager) AddSubtask(taskID int, title string, description string) {
 	for i := range tm.tasks {
 		if tm.tasks[i].ID == taskID {
 			subtask := Subtask{
-				ID:    tm.nextSubID,
-				Title: title,
+				ID:          tm.nextSubID,
+				Title:       title,
+				Description: description,
+				CreatedAt:   time.Now(),
 			}
 			tm.tasks[i].Subtasks = append(tm.tasks[i].Subtasks, subtask)
 			tm.nextSubID++
@@ -99,6 +109,12 @@ func (tm *TaskManager) ToggleComplete(taskID int) {
 	for i := range tm.tasks {
 		if tm.tasks[i].ID == taskID {
 			tm.tasks[i].Complete = !tm.tasks[i].Complete
+			if tm.tasks[i].Complete {
+				now := time.Now()
+				tm.tasks[i].CompletedAt = &now
+			} else {
+				tm.tasks[i].CompletedAt = nil
+			}
 			break
 		}
 	}
@@ -111,6 +127,12 @@ func (tm *TaskManager) ToggleSubtaskComplete(taskID, subtaskID int) {
 			for j := range tm.tasks[i].Subtasks {
 				if tm.tasks[i].Subtasks[j].ID == subtaskID {
 					tm.tasks[i].Subtasks[j].Complete = !tm.tasks[i].Subtasks[j].Complete
+					if tm.tasks[i].Subtasks[j].Complete {
+						now := time.Now()
+						tm.tasks[i].Subtasks[j].CompletedAt = &now
+					} else {
+						tm.tasks[i].Subtasks[j].CompletedAt = nil
+					}
 					break
 				}
 			}
@@ -144,27 +166,38 @@ func (tm *TaskManager) RemoveSubtask(taskID, subtaskID int) {
 	}
 }
 
-// EditTask edits the title of a task by ID
-func (tm *TaskManager) EditTask(taskID int, newTitle string) {
+func (tm *TaskManager) EditTask(taskID int, title string, description string) {
 	for i := range tm.tasks {
 		if tm.tasks[i].ID == taskID {
-			tm.tasks[i].Title = newTitle
+			tm.tasks[i].Title = title
+			tm.tasks[i].Description = description
 			break
 		}
 	}
 }
 
-// EditSubtask edits the title of a subtask by ID
-func (tm *TaskManager) EditSubtask(taskID, subtaskID int, newTitle string) {
+func (tm *TaskManager) EditSubtask(taskID int, subtaskID int, title string, description string) {
 	for i := range tm.tasks {
 		if tm.tasks[i].ID == taskID {
 			for j := range tm.tasks[i].Subtasks {
 				if tm.tasks[i].Subtasks[j].ID == subtaskID {
-					tm.tasks[i].Subtasks[j].Title = newTitle
+					tm.tasks[i].Subtasks[j].Title = title
+					tm.tasks[i].Subtasks[j].Description = description
 					break
 				}
 			}
 			break
 		}
 	}
+}
+
+// GetTasksByCompletion returns tasks filtered by completion status
+func (tm *TaskManager) GetTasksByCompletion(completed bool) []Task {
+	var tasks []Task
+	for _, task := range tm.tasks {
+		if task.Complete == completed {
+			tasks = append(tasks, task)
+		}
+	}
+	return tasks
 }
