@@ -49,10 +49,14 @@ func StartUI(tm *task.TaskManager) {
 
 	// Create a gauge for task completion percentage
 	gauge := widgets.NewGauge()
-	gauge.Title = "Subtasks Completion Percentage"
+	gauge.Title = "⏳ Subtasks Completion ⏳"
+	gauge.Percent = 0
 	gauge.BarColor = termui.ColorGreen
-	gauge.LabelStyle = termui.NewStyle(termui.ColorYellow)
-	gauge.TitleStyle.Fg = termui.ColorWhite
+	gauge.LabelStyle = termui.NewStyle(termui.ColorBlack)
+	gauge.TitleStyle = termui.NewStyle(termui.ColorMagenta, termui.ColorClear, termui.ModifierBold)
+	gauge.BorderStyle = termui.NewStyle(termui.ColorCyan)
+	gauge.PaddingLeft = 1
+	gauge.PaddingRight = 1
 
 	// Create a pie chart for task status
 	pieChart := widgets.NewPieChart()
@@ -80,8 +84,8 @@ func StartUI(tm *task.TaskManager) {
 			),
 			termui.NewCol(0.5,
 				termui.NewRow(0.3, description),
-				termui.NewRow(0.35, gauge),
-				termui.NewRow(0.35, pieChart),
+				termui.NewRow(0.4, gauge),    // Increased from 0.35 to 0.4
+				termui.NewRow(0.3, pieChart), // Adjusted to fit the new gauge size
 			),
 		),
 	)
@@ -304,14 +308,18 @@ func StartUI(tm *task.TaskManager) {
 			if !inSubtaskMode && len(tm.ListTasks()) > 0 && selectedTaskIndex > 0 {
 				selectedTaskIndex--
 				taskList.SelectedRow = selectedTaskIndex
+				// Reset subtask index when changing tasks
+				selectedSubtaskIndex = 0
+				subtaskList.SelectedRow = selectedSubtaskIndex
 				updateSubtaskList(subtaskList, tm, tm.ListTasks()[selectedTaskIndex].ID)
 				updateGauge(gauge, tm, tm.ListTasks()[selectedTaskIndex].ID)
 				updateDescription(description, tm, selectedTaskIndex, selectedSubtaskIndex, inSubtaskMode)
-				termui.Render(taskList, subtaskList)
-			} else if inSubtaskMode && selectedSubtaskIndex > 0 {
+				termui.Render(taskList, subtaskList, description)
+			} else if inSubtaskMode && len(tm.ListSubtasks(tm.ListTasks()[selectedTaskIndex].ID)) > 0 && selectedSubtaskIndex > 0 {
 				selectedSubtaskIndex--
 				subtaskList.SelectedRow = selectedSubtaskIndex
-				termui.Render(subtaskList)
+				updateDescription(description, tm, selectedTaskIndex, selectedSubtaskIndex, inSubtaskMode)
+				termui.Render(subtaskList, description)
 			}
 
 		case "<C-o>":
@@ -462,6 +470,8 @@ func updateGauge(gauge *widgets.Gauge, tm *task.TaskManager, taskID int) {
 		// No task selected
 		gauge.Percent = 0
 		gauge.Label = "No Task Selected"
+		gauge.BarColor = termui.ColorYellow
+		gauge.LabelStyle = termui.NewStyle(termui.ColorBlack, termui.ColorYellow)
 		return
 	}
 
@@ -472,6 +482,8 @@ func updateGauge(gauge *widgets.Gauge, tm *task.TaskManager, taskID int) {
 		// No subtasks
 		gauge.Percent = 0
 		gauge.Label = "No Subtasks"
+		gauge.BarColor = termui.ColorYellow
+		gauge.LabelStyle = termui.NewStyle(termui.ColorBlack, termui.ColorYellow)
 		return
 	}
 	completedSubtasks := 0
@@ -482,7 +494,26 @@ func updateGauge(gauge *widgets.Gauge, tm *task.TaskManager, taskID int) {
 	}
 	percentage := (completedSubtasks * 100) / totalSubtasks
 	gauge.Percent = percentage
-	gauge.Label = fmt.Sprintf("%d%%", percentage)
+	gauge.Label = fmt.Sprintf("✔ %d%% Complete ✔", percentage)
+
+	// Change bar color based on percentage
+	switch {
+	case percentage < 20:
+		gauge.BarColor = termui.ColorRed
+		gauge.LabelStyle = termui.NewStyle(termui.ColorWhite, termui.ColorRed)
+	case percentage < 40:
+		gauge.BarColor = termui.ColorMagenta
+		gauge.LabelStyle = termui.NewStyle(termui.ColorBlack, termui.ColorMagenta)
+	case percentage < 60:
+		gauge.BarColor = termui.ColorYellow
+		gauge.LabelStyle = termui.NewStyle(termui.ColorBlack, termui.ColorYellow)
+	case percentage < 80:
+		gauge.BarColor = termui.ColorBlue
+		gauge.LabelStyle = termui.NewStyle(termui.ColorBlack, termui.ColorBlue)
+	default:
+		gauge.BarColor = termui.ColorGreen
+		gauge.LabelStyle = termui.NewStyle(termui.ColorBlack, termui.ColorGreen)
+	}
 }
 
 func updatePieChart(pieChart *widgets.PieChart, tm *task.TaskManager) {
