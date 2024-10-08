@@ -150,6 +150,11 @@ func StartUI(tm *task.TaskManager) {
 				}
 			}
 
+		case "<C-b>":
+			showTaskTreeModal(tm)
+			termui.Clear() // Clear the screen after closing the tree modal
+			termui.Render(grid)
+
 		case "<C-e>": // Enter edit mode for the selected task or subtask title
 			if !inSubtaskMode && len(tm.ListTasks()) > 0 {
 				typingMode = true
@@ -581,12 +586,61 @@ func showHelpModal() {
 		"Ctrl+l: Add/edit description for task/subtask\n" +
 		"Ctrl+k / Up Arrow: Move selection up\n" +
 		"Ctrl+j / Down Arrow: Move selection down\n" +
-		"Ctrl+t: Toggle task or subtask completion\n"
+		"Ctrl+t: Toggle task or subtask completion\n" +
+		"Ctrl+b: Show task tree\n"
 	helpText.WrapText = true
 
 	termWidth, termHeight := termui.TerminalDimensions()
 	helpText.SetRect(termWidth/4, termHeight/4, 3*termWidth/4, 3*termHeight/4)
 	termui.Render(helpText)
+
+	// Wait for a key event to close the modal
+	for e := range termui.PollEvents() {
+		if e.Type == termui.KeyboardEvent {
+			break
+		}
+	}
+}
+
+func buildTaskTreeRepresentation(tm *task.TaskManager) string {
+	var sb strings.Builder
+
+	tasks := tm.ListTasks()
+	for _, task := range tasks {
+		taskStatus := "[ ]"
+		if task.Complete {
+			taskStatus = "[x]"
+		}
+		sb.WriteString(fmt.Sprintf("%s %d. %s\n", taskStatus, task.ID, task.Title))
+
+		// Now write the subtasks, indented
+		for _, subtask := range task.Subtasks {
+			subStatus := "[ ]"
+			if subtask.Complete {
+				subStatus = "[x]"
+			}
+			sb.WriteString(fmt.Sprintf("    %s %d. %s\n", subStatus, subtask.ID, subtask.Title))
+		}
+	}
+
+	return sb.String()
+}
+
+func showTaskTreeModal(tm *task.TaskManager) {
+	// Create a new Paragraph widget to display the tree
+	treeText := widgets.NewParagraph()
+	treeText.Title = "Task Tree"
+	treeText.WrapText = true
+
+	// Build the tree representation
+	treeRepresentation := buildTaskTreeRepresentation(tm)
+
+	treeText.Text = treeRepresentation
+
+	// Set the size and position of the modal
+	termWidth, termHeight := termui.TerminalDimensions()
+	treeText.SetRect(termWidth/4, termHeight/4, 3*termWidth/4, 3*termHeight/4)
+	termui.Render(treeText)
 
 	// Wait for a key event to close the modal
 	for e := range termui.PollEvents() {
