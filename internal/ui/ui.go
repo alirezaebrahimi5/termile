@@ -2,12 +2,16 @@ package ui
 
 import (
 	"Termile/internal/task"
+	"Termile/pkg/storage"
 	"fmt"
 	"github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
+	"log"
 	"math"
 	"strings"
 )
+
+const taskFile = "tasks.json"
 
 // StartUI starts the terminal UI for task and subtask management
 func StartUI(tm *task.TaskManager) {
@@ -115,6 +119,10 @@ func StartUI(tm *task.TaskManager) {
 				taskInput.Text = ""
 				taskInput.Title = "Enter new subtask"
 				termui.Render(taskInput)
+			}
+		case "<C-x>":
+			if err := storage.SaveTasks(taskFile, tm.ListTasks()); err != nil {
+				log.Printf("failed to save tasks: %v", err)
 			}
 
 		case "<Backspace>": // Handle backspace during task input
