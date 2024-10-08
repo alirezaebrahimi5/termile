@@ -60,12 +60,20 @@ func StartUI(tm *task.TaskManager) {
 
 	// Create a pie chart for task status
 	pieChart := widgets.NewPieChart()
-	pieChart.Title = "Tasks Status"
+	pieChart.Title = "📊 Tasks Status 📊"
 	pieChart.AngleOffset = -.5 * math.Pi // Start from the top
+	pieChart.Data = []float64{0, 100}    // Initialize with default values
 	pieChart.LabelFormatter = func(i int, v float64) string {
-		labels := []string{"Completed", "Pending"}
-		return fmt.Sprintf("%s: %.0f%%", labels[i], v)
+		labels := []string{"✅ Completed", "❌ Pending"}
+		return fmt.Sprintf("%s\n%.0f%%", labels[i], v)
 	}
+	pieChart.Colors = []termui.Color{termui.ColorGreen, termui.ColorRed}
+	pieChart.BorderStyle = termui.NewStyle(termui.ColorCyan)
+	pieChart.TitleStyle = termui.NewStyle(termui.ColorMagenta, termui.ColorClear, termui.ModifierBold)
+	pieChart.PaddingTop = 1
+	pieChart.PaddingBottom = 1
+	pieChart.PaddingLeft = 2
+	pieChart.PaddingRight = 2
 
 	// Update the bar chart data
 	updateBarChart(barChart, tm)
@@ -84,8 +92,8 @@ func StartUI(tm *task.TaskManager) {
 			),
 			termui.NewCol(0.5,
 				termui.NewRow(0.3, description),
-				termui.NewRow(0.4, gauge),    // Increased from 0.35 to 0.4
-				termui.NewRow(0.3, pieChart), // Adjusted to fit the new gauge size
+				termui.NewRow(0.3, gauge),
+				termui.NewRow(0.4, pieChart), // Increased from 0.35 to 0.4
 			),
 		),
 	)
@@ -528,11 +536,13 @@ func updatePieChart(pieChart *widgets.PieChart, tm *task.TaskManager) {
 			completedTasks++
 		}
 	}
-	// Remove the unused variable
-	// pendingTasks := totalTasks - completedTasks
 	completedPercentage := (float64(completedTasks) / float64(totalTasks)) * 100
 	pendingPercentage := 100 - completedPercentage
 	pieChart.Data = []float64{completedPercentage, pendingPercentage}
+	pieChart.LabelFormatter = func(i int, v float64) string {
+		labels := []string{"✅ Completed", "❌ Pending"}
+		return fmt.Sprintf("%s\n%.0f%%", labels[i], v)
+	}
 	pieChart.Colors = []termui.Color{termui.ColorGreen, termui.ColorRed}
 }
 
