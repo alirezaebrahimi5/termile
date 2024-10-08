@@ -314,6 +314,11 @@ func StartUI(tm *task.TaskManager) {
 				termui.Render(subtaskList)
 			}
 
+		case "<C-o>":
+			showHelpModal()
+			termui.Clear() // Clear the screen after closing the help modal
+			termui.Render(grid)
+
 		case "<C-t>": // Toggle task completion (mark as done/undone)
 			if inSubtaskMode && len(tm.ListSubtasks(tm.ListTasks()[selectedTaskIndex].ID)) > 0 {
 				// Subtask mode: Toggle the selected subtask's completion status
@@ -517,6 +522,35 @@ func updateDescription(description *widgets.Paragraph, tm *task.TaskManager, tas
 			description.Text = task.Description
 		} else {
 			description.Text = "No Task Selected"
+		}
+	}
+}
+
+// showHelpModal displays a modal with help information
+func showHelpModal() {
+	helpText := widgets.NewParagraph()
+	helpText.Title = "Help"
+	helpText.Text = "\n" +
+		"Ctrl+q / Ctrl+c: Quit the application\n" +
+		"Ctrl+a: Add new task\n" +
+		"Ctrl+A: Add new subtask\n" +
+		"Ctrl+e: Edit selected task or subtask\n" +
+		"Ctrl+d: Delete selected task or subtask\n" +
+		"Ctrl+s: Switch to subtask view\n" +
+		"Ctrl+l: Add/edit description for task/subtask\n" +
+		"Ctrl+k / Up Arrow: Move selection up\n" +
+		"Ctrl+j / Down Arrow: Move selection down\n" +
+		"Ctrl+t: Toggle task or subtask completion\n"
+	helpText.WrapText = true
+
+	termWidth, termHeight := termui.TerminalDimensions()
+	helpText.SetRect(termWidth/4, termHeight/4, 3*termWidth/4, 3*termHeight/4)
+	termui.Render(helpText)
+
+	// Wait for a key event to close the modal
+	for e := range termui.PollEvents() {
+		if e.Type == termui.KeyboardEvent {
+			break
 		}
 	}
 }
