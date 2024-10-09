@@ -3,36 +3,37 @@ package storage
 import (
 	"Termile/internal/task"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"os"
 )
 
-// SaveTasks saves the list of tasks to a specified file in JSON format
-func SaveTasks(filename string, tasks []task.Task) error {
-	data, err := json.Marshal(tasks)
+// SaveProjects saves the list of projects to a specified file in JSON format
+func SaveProjects(filename string, projects []task.Project) error {
+	data, err := json.Marshal(projects)
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filename, data, 0644)
+
+	return os.WriteFile(filename, data, 0644)
 }
 
-// LoadTasks loads the list of tasks from a specified JSON file
-func LoadTasks(filename string) ([]task.Task, error) {
+// LoadProjects loads the list of projects from a specified JSON file
+func LoadProjects(filename string) ([]task.Project, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	data, err := ioutil.ReadAll(file)
+	data, err := io.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
 
-	var tasks []task.Task
-	if err := json.Unmarshal(data, &tasks); err != nil {
+	var projects []task.Project
+	if err := json.Unmarshal(data, &projects); err != nil {
 		return nil, err
 	}
 
-	return tasks, nil
+	return projects, nil
 }

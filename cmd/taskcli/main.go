@@ -9,28 +9,25 @@ import (
 	"github.com/gizak/termui/v3"
 )
 
-const taskFile = "tasks.json"
+const projectFile = "projects.json"
 
 func main() {
 	if err := termui.Init(); err != nil {
 		log.Fatalf("failed to initialize termui: %v", err)
 	}
 	defer termui.Close()
-
-	// Load tasks from the JSON file
-	tasks, err := storage.LoadTasks(taskFile)
+	projects, err := storage.LoadProjects(projectFile)
 	if err != nil {
-		log.Printf("failed to load tasks: %v", err)
+		log.Printf("failed to load projects: %v", err)
 	}
-
 	taskManager := task.NewTaskManager()
-	taskManager.SetTasks(tasks) // Use the setter to load tasks into taskManager
+	taskManager.SetProjects(projects) // Use the setter to load projects into taskManager
 
 	// Start the UI
 	ui.StartUI(taskManager)
 
 	// Save tasks when the app exits
-	if err := storage.SaveTasks(taskFile, taskManager.ListTasks()); err != nil {
-		log.Printf("failed to save tasks: %v", err)
+	if err := storage.SaveProjects(projectFile, taskManager.ListProjects()); err != nil {
+		log.Printf("failed to save projects: %v", err)
 	}
 }
