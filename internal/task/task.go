@@ -262,10 +262,9 @@ func (tm *TaskManager) SetProjects(projects []Project) {
 }
 
 // EditTask updates the title and description of a task
-func (tm *TaskManager) EditTask(projectID, taskID int, newTitle, newDescription string) error {
+func (tm *TaskManager) EditTask(projectID, taskID int, newTitle, newDescription string) {
 	// Validate project existence
 	project := tm.projects[projectID]
-
 	// Locate the subtask by ID
 	for i, task := range project.Tasks {
 		if task.ID == taskID {
@@ -274,12 +273,10 @@ func (tm *TaskManager) EditTask(projectID, taskID int, newTitle, newDescription 
 			break
 		}
 	}
-
-	return fmt.Errorf("subtask with ID %d not found in task %d", taskID, projectID)
 }
 
 // EditSubtask updates the title and description of a subtask
-func (tm *TaskManager) EditSubtask(projectID int, taskID int, subtaskID int, newTitle string, newDescription string) error {
+func (tm *TaskManager) EditSubtask(projectID int, taskID int, subtaskID int, newTitle string, newDescription string) {
 	// Validate project existence
 	project := tm.projects[projectID]
 
@@ -294,8 +291,6 @@ func (tm *TaskManager) EditSubtask(projectID int, taskID int, subtaskID int, new
 			break
 		}
 	}
-
-	return fmt.Errorf("subtask with ID %d not found in task %d", subtaskID, taskID)
 }
 
 // EditProject edits the name and description of a project by ID.

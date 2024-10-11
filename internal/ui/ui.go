@@ -116,7 +116,6 @@ func StartUI(tm *task.TaskManager) {
 	inputState := ""        // Can be "title" or "description"
 	selectedProjectID := -1 // ID of the currently selected project
 	selectedTaskID := -1    // ID of the currently selected task
-	selectedSubTaskID := -1
 	inProjectMode := true
 
 	projects := tm.ListProjects()
@@ -252,7 +251,7 @@ func StartUI(tm *task.TaskManager) {
 					// Reset getTask and subtask indices and IDs
 					selectedTaskIndex = 0
 					selectedTaskID = -1
-					selectedSubTaskID = -1
+
 					selectedSubtaskIndex = 0
 					updateTaskList(taskList, tm, selectedProjectID)
 					updateSubtaskList(subtaskList, tm, selectedProjectID, selectedTaskID)
@@ -302,15 +301,12 @@ func StartUI(tm *task.TaskManager) {
 
 				case "edit_task_name":
 					selectedTask, err := tm.GetTask(selectedProjectIndex, selectedTaskID)
-
 					if err != nil {
 						log.Printf("Error editing project name: %v", err)
 						break
 					}
 
-					if err := tm.EditTask(selectedProjectIndex, selectedTask.ID, inputText, selectedTask.Description); err != nil {
-						log.Println(err)
-					}
+					tm.EditTask(selectedProjectIndex, selectedTask.ID, inputText, selectedTask.Description)
 
 					// Prompt for project description
 					typingMode = true
@@ -322,15 +318,12 @@ func StartUI(tm *task.TaskManager) {
 					inputBuffer.WriteString(selectedTask.Description)
 					termui.Render(taskInput)
 				case "edit_subtask_name":
-					selectedSubTask, err := tm.GetSubtask(selectedProjectIndex, selectedTaskIndex, selectedSubTaskID)
-
+					selectedSubTask, err := tm.GetSubtask(selectedProjectIndex, selectedTaskIndex, selectedSubtaskIndex)
 					if err != nil {
 						log.Printf("Error editing project name: %v", err)
 						break
 					}
-					if err := tm.EditSubtask(selectedProjectIndex, selectedTaskIndex, selectedSubTask.ID, inputText, selectedSubTask.Description); err != nil {
-						log.Println(err)
-					}
+					tm.EditSubtask(selectedProjectIndex, selectedTaskIndex, selectedSubTask.ID, inputText, selectedSubTask.Description)
 					// Prompt for project description
 					typingMode = true
 
@@ -402,10 +395,7 @@ func StartUI(tm *task.TaskManager) {
 							log.Printf("Error editing getTask title: %v", err)
 							break
 						}
-						err = tm.EditTask(selectedProjectID, task.ID, inputText, task.Description)
-						if err != nil {
-							log.Print("")
-						}
+						tm.EditTask(selectedProjectID, task.ID, inputText, task.Description)
 					} else {
 						subtask, err := tm.GetSubtask(selectedProjectID, selectedTaskID, selectedSubtaskIndex)
 						if err != nil {
